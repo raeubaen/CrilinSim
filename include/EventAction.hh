@@ -1,0 +1,25 @@
+#ifndef EVENTACTION_HH
+#define EVENTACTION_HH
+
+#include "G4UserEventAction.hh"
+#include "G4AnalysisManager.hh"
+
+class CrystalHitCollection;
+
+class EventAction : public G4UserEventAction {
+public:
+    EventAction();
+    virtual ~EventAction();
+
+    virtual void BeginOfEventAction(const G4Event* event) override;
+    virtual void EndOfEventAction(const G4Event* event) override;
+
+private:
+    G4int fCrystalHCID;
+    G4AnalysisManager* analysisManager;
+    G4int eventID; // Aggiungi questa variabile membro per memorizzare l'ID dell'evento
+
+};
+
+#endif // EVENTACTION_HH
+

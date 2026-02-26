@@ -1,0 +1,95 @@
+# =========================
+# Build directories
+# =========================
+build/
+Build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# =========================
+# Compiled objects
+# =========================
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+
+# =========================
+# Dependency files
+# =========================
+*.d
+*.dep
+
+# =========================
+# ROOT files
+# =========================
+*.root
+
+# =========================
+# Logs / runtime output
+# =========================
+*.log
+*.dat
+*.csv
+*.tmp
+*.swp
+*.swo
+
+# =========================
+# Coverage / profiling
+# =========================
+*.gcno
+*.gcda
+*.gcov
+*.prof
+*.gmon
+
+# =========================
+# IDE / Editor
+# =========================
+
+# VSCode
+.vscode/
+
+# CLion / IntelliJ
+.idea/
+
+# Eclipse
+.project
+.cproject
+.settings/
+
+# QtCreator
+*.pro.user
+
+# macOS
+.DS_Store
+
+# =========================
+# Autotools
+# =========================
+aclocal.m4
+autom4te.cache/
+config.log
+config.status
+configure
+libtool
+m4/
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.orig
+*.rej
