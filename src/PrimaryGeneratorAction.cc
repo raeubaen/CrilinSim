@@ -1,83 +1,54 @@
-// PrimaryGeneratorAction.cc
-
 #include "PrimaryGeneratorAction.hh"
+#include "PrimaryGeneratorMessenger.hh"
+
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4Event.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
 : G4VUserPrimaryGeneratorAction(),
-  fParticleGun(nullptr),
-  fBeamEnergy(0.24 * GeV),
-  fEnergySmearing(0.0),
-  fDirectionSmearing(0.0) {
-    G4int n_particle = 1;
-    fParticleGun = new G4ParticleGun(n_particle);
-
+  fParticleGun(new G4ParticleGun(1)),
+  fMessenger(nullptr),
+  fSigmaX(2.65*mm),
+  fSigmaY(2.32*mm)
+{
+    // Default particle: electron
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
     G4ParticleDefinition* particle = particleTable->FindParticle("e-");
-    //G4ParticleDefinition* particle = particleTable->FindParticle("mu-");
     fParticleGun->SetParticleDefinition(particle);
-    
-    // Posizione di partenza dell'elettrone
-    G4double z0 = +30.0 * cm;    
-    //fParticleGun->SetParticlePosition(G4ThreeVector(5.1 * cm, 5.1 * cm, z0));
-    fParticleGun->SetParticlePosition(G4ThreeVector(3.9 * cm, 3.9 * cm, z0));
 
-    // Parametri dello smearing    
-    G4double sigma_x = 2.65 * mm;
-    G4double sigma_y = 2.32 * mm;
-
-    // Calcolo degli angoli theta_x e theta_y
-    G4double theta_x = G4RandGauss::shoot(0., sigma_x / std::abs(z0 -  20 * cm)); //- 20 cm -->Z fine calo a cazzotto
-    G4double theta_y = G4RandGauss::shoot(0., sigma_y / std::abs(z0 -  20 * cm));
-
-    // Calcolo della direzione del momento in base agli angoli
-    G4ThreeVector momentumDirection(std::tan(theta_x), std::tan(theta_y), 1.0);
-    momentumDirection = momentumDirection.unit(); // Normalizzazione alla lunghezza 1
-    //fParticleGun->SetParticleMomentumDirection(momentumDirection);
-    
-    // Direzione lungo l'asse z senza variazioni angolari
-    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));    // Direzione lungo l'asse z
-    
-}
-
-PrimaryGeneratorAction::~PrimaryGeneratorAction() {
-    delete fParticleGun;
-}
-
-void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
-    G4double energy = fBeamEnergy + G4RandGauss::shoot(0., fEnergySmearing);
-    fParticleGun->SetParticleEnergy(energy);
-
-
-    // Parametri dello smearing
-    G4double z0 = +30.0 * cm;    
-    G4double sigma_x = 2.65 * mm;
-    G4double sigma_y = 2.32 * mm;
-
-    // Calcolo degli angoli theta_x e theta_y
-    G4double theta_x = G4RandGauss::shoot(0., sigma_x / std::abs(z0 -  20 * cm)); //- 20 cm -->Z fine calo a cazzotto
-    G4double theta_y = G4RandGauss::shoot(0., sigma_y / std::abs(z0 -  20 * cm));
-
-    // Calcolo della direzione del momento in base agli angoli
-    G4ThreeVector momentumDirection(std::tan(theta_x), std::tan(theta_y), 1.0);
-    momentumDirection = momentumDirection.unit(); // Normalizzazione alla lunghezza 1
-    //fParticleGun->SetParticleMomentumDirection(momentumDirection);
-    
-    // Direzione lungo l'asse z senza variazioni angolari
+    // Default direction along -z
     fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));
+    fParticleGun->SetParticleEnergy(240*MeV);
 
+    // Default position center (will be smeared in GeneratePrimaries)
+    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 30*cm));
+
+    // Create messenger to control sigmaX/Y
+    fMessenger = new PrimaryGeneratorMessenger(this);
+}
+
+PrimaryGeneratorAction::~PrimaryGeneratorAction()
+{
+    delete fParticleGun;
+    delete fMessenger;
+}
+
+void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+{
+    // Central position from /gun/position
+    G4ThreeVector center = fParticleGun->GetParticlePosition();
+
+    // Gaussian smear in x and y only
+    G4double x = G4RandGauss::shoot(center.x(), fSigmaX);
+    G4double y = G4RandGauss::shoot(center.y(), fSigmaY);
+    G4double z = center.z();
+
+    fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+
+    // Energy and direction fully controlled by /gun/
     fParticleGun->GeneratePrimaryVertex(anEvent);
-}
-
-void PrimaryGeneratorAction::SetBeamEnergy(G4double energy) {
-    fBeamEnergy = energy;
-}
-
-void PrimaryGeneratorAction::SetBeamSmearing(G4double energySmearing, G4double directionSmearing) {
-    fEnergySmearing = energySmearing;
-    fDirectionSmearing = directionSmearing;
 }

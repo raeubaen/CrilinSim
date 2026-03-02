@@ -13,13 +13,17 @@
 CrystalSD::CrystalSD(const G4String& name)
     : G4VSensitiveDetector(name), fHitsCollection(nullptr) {
     // Registrazione del nome della raccolta di hit
-    collectionName.insert("CrystalHitsCollection");
+    // Correctly add the first (and only) hits collection name
+    collectionName.push_back("CrystalHitsCollection");
 }
 
 // Distruttore della classe CrystalSD
 CrystalSD::~CrystalSD() {
     // Pulizia della memoria, se necessario
-    delete fHitsCollection;
+   if(fHitsCollection) {
+        //delete fHitsCollection;
+        fHitsCollection = nullptr;
+   }
 }
 
 // Metodo Initialize per l'inizializzazione della raccolta di hit

@@ -1,30 +1,31 @@
-// PrimaryGeneratorAction.hh
-
-#ifndef PRIMARY_GENERATOR_ACTION_HH
-#define PRIMARY_GENERATOR_ACTION_HH
+#ifndef PrimaryGeneratorAction_h
+#define PrimaryGeneratorAction_h
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ThreeVector.hh"
-#include "globals.hh"
 
 class G4ParticleGun;
-class G4Event;
+class PrimaryGeneratorMessenger;
 
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction {
+class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+{
 public:
     PrimaryGeneratorAction();
     virtual ~PrimaryGeneratorAction();
 
     virtual void GeneratePrimaries(G4Event*);
 
-    void SetBeamEnergy(G4double energy);
-    void SetBeamSmearing(G4double energySmearing, G4double directionSmearing);
+    // Spot size setters (optional, controlled via messenger)
+    void SetSigmaX(G4double val) { fSigmaX = val; }
+    void SetSigmaY(G4double val) { fSigmaY = val; }
 
 private:
     G4ParticleGun* fParticleGun;
-    G4double fBeamEnergy;
-    G4double fEnergySmearing;
-    G4double fDirectionSmearing;
+    PrimaryGeneratorMessenger* fMessenger;
+
+    // Gaussian transverse spot
+    G4double fSigmaX;
+    G4double fSigmaY;
 };
 
 #endif
