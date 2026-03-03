@@ -179,48 +179,164 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     
     //////////////////////////////////////////////////////
     //////////////////////////////////////////////////////
+    G4double pitch=honeywrapcrystalSizeXY;
+    G4double crilinsizex=NcryX*pitch+2*aluminumThickness;
+    G4double crilinsizey=NcryY*pitch+2*aluminumThickness+Nlayer*kaptonThickness;
+    G4double crilinsizez=Nlayer*(crystalLength+siPMThickness+electronicsThickness);
 
+    G4Box* solidCrilin = new G4Box("solidCrilin", 0.5*crilinsizex,0.5*crilinsizey,0.5*(crilinsizez+4*mm));
+    G4LogicalVolume* logicCrilin = new G4LogicalVolume(solidCrilin, logicWorld->GetMaterial(), "logicCrilin");
+    new G4PVPlacement(nullptr, G4ThreeVector(0.,0.,-0.5*(crilinsizez+4*mm)), logicCrilin, "CrilinVolume", logicWorld, false, 0); //not sure about it
     G4ThreeVector crystalPos(0, 0, crystalLength / 2);
     G4ThreeVector wrapPos = crystalPos;
     G4ThreeVector honeycombPos = wrapPos;
     G4ThreeVector electronicsPos(0, 0, crystalLength + siPMThickness + electronicsThickness / 2);
     G4ThreeVector aluminumPos(0, 0, crystalLength / 2);
     G4ThreeVector kaptonStripPos(0, (NcryY * honeywrapcrystalSizeXY + 2 * aluminumThickness) / 2 - aluminumTopScavo + 0.01 * mm + kaptonThickness / 2 , (crystalLength + siPMThickness) / 2  );
+    //G4double pitch = honeywrapcrystalSizeXY;
+    G4double layerStep = crystalLength + siPMThickness + electronicsThickness;
 
+    // Centering offsets (XY only)
+    G4double x0 = - (NcryX - 1) * pitch / 2.0;
+    G4double y0 = - (NcryY - 1) * pitch / 2.0;
+    G4double z0 = - crilinsizez / 2.0 +2*mm;
+    // // Placement
+    // for (int k = 0; k < Nlayer; ++k) {      
+    //     for (int i = 0; i < NcryX; ++i) {
+    //         for (int j = 0; j < NcryY; ++j) {
 
-    // Placement
-    for (int k = 0; k < Nlayer; ++k) {      
+	//       G4ThreeVector crystalShift(i * (honeywrapcrystalSizeXY), j * (honeywrapcrystalSizeXY), k * (crystalLength + electronicsThickness + siPMThickness));
+	//       G4ThreeVector sipmBasePos = crystalPos + crystalShift + G4ThreeVector(0, 0, crystalLength / 2 + siPMThickness / 2);
+
+	//       new G4PVPlacement(nullptr,crystalPos+ crystalShift, fLogicCrystal, "Crystal", logicCrilin, false, i + j * NcryY + k * NcryX * NcryY);
+	//       new G4PVPlacement(nullptr,wrapPos+ crystalShift, logicWrap, "Wrap", logicCrilin, false,  i + j * NcryY + k * NcryX * NcryY);
+	//       new G4PVPlacement(nullptr, honeycombPos+crystalShift, logicHoneycomb, "Honeycomb", logicCrilin, false,  i + j * NcryY + k * NcryX * NcryY);
+
+	//       G4ThreeVector sipmShifts[4] = {
+	// 	G4ThreeVector(+siPMOffset, +siPMOffset, 0),
+	// 	G4ThreeVector(+siPMOffset, -siPMOffset, 0),
+	// 	G4ThreeVector(-siPMOffset, +siPMOffset, 0),
+	// 	G4ThreeVector(-siPMOffset, -siPMOffset, 0)
+	//       };
+	//       for (int s = 0; s < 4; ++s) {
+    //             new G4PVPlacement(nullptr, sipmBasePos + sipmShifts[s], logicSiPM, "SiPM", logicCrilin, false, 4 * (i + j * NcryY + k * NcryX * NcryY) + s);
+	//       }	      
+    //         }
+    //     }
+    //     G4ThreeVector electronicShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5), k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
+	// new G4PVPlacement(nullptr, electronicsPos + electronicShift, logicElectronics, "Electronics", logicCrilin, false, k);
+    //     G4ThreeVector aluminumShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5),  k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
+	// new G4PVPlacement(nullptr, aluminumPos + aluminumShift, logicAluminum, "AluminumShell", logicCrilin, false, k);
+    //     G4ThreeVector kaptonStripShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5),  k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
+	// new G4PVPlacement(nullptr, kaptonStripPos+kaptonStripShift, logicKaptonStrip, "KaptonStrip", logicCrilin, false, 0);
+
+													
+    // }
+    for (int k = 0; k < Nlayer; ++k) {
         for (int i = 0; i < NcryX; ++i) {
             for (int j = 0; j < NcryY; ++j) {
 
-	      G4ThreeVector crystalShift(i * (honeywrapcrystalSizeXY), j * (honeywrapcrystalSizeXY), k * (crystalLength + electronicsThickness + siPMThickness));
-	      G4ThreeVector sipmBasePos = crystalPos + crystalShift + G4ThreeVector(0, 0, crystalLength / 2 + siPMThickness / 2);
+                G4ThreeVector basePos(
+                    x0 + i * pitch,
+                    y0 + j * pitch,
+                    k * layerStep + crystalLength / 2.0 + z0
+                );
 
-	      new G4PVPlacement(nullptr, crystalPos + crystalShift, fLogicCrystal, "Crystal", logicWorld, false, i + j * NcryY + k * NcryX * NcryY);
-	      new G4PVPlacement(nullptr, wrapPos + crystalShift, logicWrap, "Wrap", logicWorld, false,  i + j * NcryY + k * NcryX * NcryY);
-	      new G4PVPlacement(nullptr, honeycombPos + crystalShift, logicHoneycomb, "Honeycomb", logicWorld, false,  i + j * NcryY + k * NcryX * NcryY);
+            // Crystal
+                new G4PVPlacement(nullptr,
+                                basePos,
+                                fLogicCrystal,
+                                "Crystal",
+                                logicCrilin,
+                                false,
+                                i + j*NcryX + k*NcryX*NcryY);
 
-	      G4ThreeVector sipmShifts[4] = {
-		G4ThreeVector(+siPMOffset, +siPMOffset, 0),
-		G4ThreeVector(+siPMOffset, -siPMOffset, 0),
-		G4ThreeVector(-siPMOffset, +siPMOffset, 0),
-		G4ThreeVector(-siPMOffset, -siPMOffset, 0)
-	      };
-	      for (int s = 0; s < 4; ++s) {
-                new G4PVPlacement(nullptr, sipmBasePos + sipmShifts[s], logicSiPM, "SiPM", logicWorld, false, 4 * (i + j * NcryY + k * NcryX * NcryY) + s);
-	      }	      
+                // Wrap
+                new G4PVPlacement(nullptr,
+                                basePos,
+                                logicWrap,
+                                "Wrap",
+                                logicCrilin,
+                                false,
+                                i + j*NcryX + k*NcryX*NcryY);
+
+                // Honeycomb
+                new G4PVPlacement(nullptr,
+                                basePos,
+                                logicHoneycomb,
+                                "Honeycomb",
+                                logicCrilin,
+                                false,
+                                i + j*NcryX + k*NcryX*NcryY);
+
+                // SiPMs
+                G4ThreeVector sipmCenter =
+                    basePos + G4ThreeVector(0, 0, crystalLength/2.0 + siPMThickness/2.0);
+
+                G4ThreeVector sipmShifts[4] = {
+                    G4ThreeVector(+siPMOffset, +siPMOffset, 0),
+                    G4ThreeVector(+siPMOffset, -siPMOffset, 0),
+                    G4ThreeVector(-siPMOffset, +siPMOffset, 0),
+                    G4ThreeVector(-siPMOffset, -siPMOffset, 0)
+                };
+
+                for (int s = 0; s < 4; ++s) {
+                    new G4PVPlacement(nullptr,
+                                    sipmCenter + sipmShifts[s],
+                                    logicSiPM,
+                                    "SiPM",
+                                    logicCrilin,
+                                    false,
+                                    4*(i + j*NcryX + k*NcryX*NcryY) + s);
+                }
             }
-        }
-        G4ThreeVector electronicShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5), k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
-	new G4PVPlacement(nullptr, electronicsPos + electronicShift, logicElectronics, "Electronics", logicWorld, false, k);
-        G4ThreeVector aluminumShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5),  k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
-	new G4PVPlacement(nullptr, aluminumPos + aluminumShift, logicAluminum, "AluminumShell", logicWorld, false, k);
-        G4ThreeVector kaptonStripShift(honeywrapcrystalSizeXY * (NcryX/2.-0.5), honeywrapcrystalSizeXY * (NcryY/2.-0.5),  k * (crystalLength + electronicsThickness + siPMThickness)); //aggiunto da me
-	new G4PVPlacement(nullptr, kaptonStripPos+kaptonStripShift, logicKaptonStrip, "KaptonStrip", logicWorld, false, 0);
-
-													
     }
 
+    // Electronics slab (centered in XY automatically)
+    G4ThreeVector electronicsPos(
+        0,
+        0,
+        k * layerStep + crystalLength + z0+ siPMThickness + electronicsThickness/2.0
+    );
+
+    new G4PVPlacement(nullptr,
+                      electronicsPos,
+                      logicElectronics,
+                      "Electronics",
+                      logicCrilin,
+                      false,
+                      k);
+
+    // Aluminum shell (centered in XY)
+    G4ThreeVector aluminumPos(
+        0,
+        0,
+        k * layerStep + crystalLength/2.0 + z0
+    );
+
+    new G4PVPlacement(nullptr,
+                      aluminumPos,
+                      logicAluminum,
+                      "AluminumShell",
+                      logicCrilin,
+                      false,
+                      k);
+
+    // Kapton strip (centered in XY)
+    G4ThreeVector kaptonPos(
+        0,
+        (NcryY * pitch)/2.0 + kaptonThickness/2.0,
+        k * layerStep + z0+(crystalLength + siPMThickness)/2.0
+    );
+
+    new G4PVPlacement(nullptr,
+                      kaptonPos,
+                      logicKaptonStrip,
+                      "KaptonStrip",
+                      logicCrilin,
+                      false,
+                      k);
+}
     // Visualization attributes
     //   logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
 

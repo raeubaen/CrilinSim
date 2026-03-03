@@ -4,14 +4,28 @@
 /vis/viewer/flush
 
 # Disegna traiettorie solo per le particelle cariche
-/vis/modeling/trajectories/create/drawByCharge
+#/vis/modeling/trajectories/create/drawByCharge
 
 # Aggiungi traiettorie alla scena
 /vis/scene/add/trajectories
 /vis/viewer/set/viewpointThetaPhi 90 0
-/vis/scene/add/axes 0 0 0 11 cm
+#/vis/scene/add/axes 0 0 0 11 cm
 
 /vis/viewer/zoom 1.2
 
 # Aggiorna la vista
+
 /vis/viewer/refresh
+
+/tracking/verbose 0
+
+/run/initialize
+/gun/particle e-
+/gun/energy 1 GeV
+/gun/position 0 0 0
+/gun/direction 0 0 1
+
+/beam/sigmaX 5cm
+/beam/sigmaY 5cm
+
+#/run/beamOn 1
