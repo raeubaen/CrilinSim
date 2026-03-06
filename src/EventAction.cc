@@ -1,69 +1,118 @@
 #include "EventAction.hh"
 #include "G4Event.hh"
 #include "G4HCofThisEvent.hh"
-#include "G4SDManager.hh" // Include per la gestione della raccolta di hit
+#include "G4SDManager.hh"
 #include "CrystalHit.hh"
-#include "G4AnalysisManager.hh" // Include per l'analisi dei dati
-#include <map> // Include per la mappa
+#include "VirtualDetector.hh"
 
-EventAction::EventAction()
-: G4UserEventAction(), 
-  analysisManager(G4AnalysisManager::Instance()), eventID(-1) // Inizializza l'analisi manager e l'ID dell'evento
+EventAction::EventAction(RunAction* runAction)
+: G4UserEventAction(), fRunAction(runAction), fCrystalHCID(-1), fVDEnergy(0.0)
 {
-    fCrystalHCID = -1; // Assicurati di inizializzare fCrystalHCID
-}
+ G4SDManager* sdman = G4SDManager::GetSDMpointer();
+    G4VSensitiveDetector* sd = sdman->FindSensitiveDetector("CrystalSD");
+    fCrystalSD = dynamic_cast<CrystalSD*>(sd);
 
-EventAction::~EventAction()
-{
-    // Non è necessario eliminare l'istanza di G4AnalysisManager, gestisce la vita dell'oggetto automaticamente
+
+    if (fCrystalSD) {
+        fNcryX = fCrystalSD->GetNcryX();
+        fNcryY = fCrystalSD->GetNcryY();
+        fNlayer = fCrystalSD->GetNlayer();
+        G4cout << "EventAction: found CrystalSD with " 
+               << fNcryX << " x " << fNcryY << " x " << fNlayer << G4endl;
+    } else {
+        G4Exception("EventAction::EventAction()",
+                    "MyCode0002", JustWarning,
+                    "CrystalSD not found! Geometry info unavailable.");
+    }
+
 }
 
 void EventAction::BeginOfEventAction(const G4Event* event)
 {
+    fHit_ix.clear();
+    fHit_iy.clear();
+    fHit_iz.clear();
+    fHit_x.clear();
+    fHit_y.clear();
+    fHit_z.clear();
+    fHit_E.clear();
+    fVDEnergy = 0.0;
 
-    // Memorizza l'ID dell'evento
-    eventID = event->GetEventID();
-
-    // Inizializza l'ID della raccolta se non è stato fatto
-    if (fCrystalHCID == -1) {
-        auto sdManager = G4SDManager::GetSDMpointer();
-        fCrystalHCID = sdManager->GetCollectionID("CrystalHitsCollection");
-    }
+    if(fCrystalHCID == -1)
+        fCrystalHCID = G4SDManager::GetSDMpointer()->GetCollectionID("CrystalHitsCollection");
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
-    // Retrieve the hits collection
-    auto hitsCollection = static_cast<G4THitsCollection<CrystalHit>*>(event->GetHCofThisEvent()->GetHC(fCrystalHCID));
+    auto hc = event->GetHCofThisEvent();
+    if (!hc) return;
+
+    // --- Crystal hits
+    auto hitsCollection = static_cast<G4THitsCollection<CrystalHit>*>(hc->GetHC(fCrystalHCID));
+    std::map<int, CrystalHit*> crystalMap;
 
     if (hitsCollection) {
-        // Mappa per accumulare l'energia totale per ogni cristallo
-        std::map<G4int, G4double> energyMap;
+        for (int i = 0; i < hitsCollection->entries(); i++) {
+            auto hit = (*hitsCollection)[i];
+            if (hit->GetEnergyDep() <= 0.) continue;
 
-        // Accumula l'energia depositata per ciascun cristallo
-        for (G4int i = 0; i < hitsCollection->GetSize(); ++i) {
-            CrystalHit* hit = (*hitsCollection)[i];
-            G4int crystalID = hit->GetID();    // Get crystal ID
-            G4double edep = hit->GetEnergyDep();    // Get deposited energy
+            // Compute unique crystal ID
+            int id = hit->GetIx() + hit->GetIy() * fNcryX + hit->GetIz() * fNcryX * fNcryY;
 
-            // Somma l'energia per ciascun ID di cristallo
-            energyMap[crystalID] += edep;
+            // Only one hit per crystal
+            if (crystalMap.find(id) == crystalMap.end()) {
+                // Clone the first hit
+                CrystalHit* newHit = new CrystalHit(*hit);
+                crystalMap[id] = newHit;
+            } else {
+                // Accumulate energy for repeated hits
+                crystalMap[id]->AddEnergy(hit->GetEnergyDep());
+            }
         }
 
-        // Stampa dell'energia totale per ciascun cristallo
-        for (const auto& entry : energyMap) {
-            G4int crystalID = entry.first;
-            G4double totalEnergy = entry.second / CLHEP::MeV; // Convert energy to MeV
+        // Fill event vectors from the map
+        for (const auto& [id, hit] : crystalMap) {
+            fHit_ix.push_back(hit->GetIx());
+            fHit_iy.push_back(hit->GetIy());
+            fHit_iz.push_back(hit->GetIz());
 
-            //G4cout << "Event " << eventID << ", Crystal ID: " << crystalID << ", Total Energy Deposited: " << totalEnergy << " MeV" << G4endl;
+            G4ThreeVector center = fCrystalSD->GetCrystalCenter(hit->GetIx(), hit->GetIy(), hit->GetIz());
+            fHit_x.push_back(center.x());
+            fHit_y.push_back(center.y());
+            fHit_z.push_back(center.z());
 
-            // Write to the ROOT file
-            analysisManager->FillNtupleIColumn(0, eventID);
-            analysisManager->FillNtupleIColumn(1, crystalID);
-            analysisManager->FillNtupleDColumn(2, totalEnergy); // Convert energy to MeV
-            analysisManager->AddNtupleRow();
+            fHit_E.push_back(hit->GetEnergyDep() / CLHEP::MeV);
+
+            delete hit;  // free the cloned hit
         }
-        G4cout << "Event " << eventID << G4endl;
     }
-}
 
+    // --- Virtual Detector
+    auto vd = static_cast<VirtualDetector*>(G4SDManager::GetSDMpointer()->FindSensitiveDetector("VD"));
+    fVDEnergy = vd ? vd->GetTotalEnergy() / CLHEP::MeV : 0.;
+
+    // --- Fill the tree via RunAction
+    fRunAction->fEventID = event->GetEventID();
+    fRunAction->fHit_ix = fHit_ix;
+    fRunAction->fHit_iy = fHit_iy;
+    fRunAction->fHit_iz = fHit_iz;
+
+    fRunAction->fHit_x = fHit_x;
+    fRunAction->fHit_y = fHit_y;
+    fRunAction->fHit_z = fHit_z;
+    fRunAction->fHit_E = fHit_E;
+
+    fRunAction->fVDEnergy = fVDEnergy;
+
+    fRunAction->GetTree()->Fill();
+
+    // --- Clear vectors for next event
+    fHit_ix.clear();
+    fHit_iy.clear();
+    fHit_iz.clear();
+    fHit_x.clear();
+    fHit_y.clear();
+    fHit_z.clear();
+    fHit_E.clear();
+    fVDEnergy = 0.;
+}

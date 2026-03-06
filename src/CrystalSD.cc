@@ -1,80 +1,79 @@
+// CrystalSD.cc
 #include "CrystalSD.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4SDManager.hh"
-#include "CrystalHitsCollection.hh" // Includi il file corretto
 #include "CrystalHit.hh"
 #include "G4Step.hh"
 #include "G4TouchableHistory.hh"
-#include "G4ios.hh"
 #include "G4VTouchable.hh"
 #include "G4Track.hh"
+#include "G4ThreeVector.hh"
+#include "G4SystemOfUnits.hh"
+#include <vector>
 
-// Costruttore della classe CrystalSD
-CrystalSD::CrystalSD(const G4String& name)
-    : G4VSensitiveDetector(name), fHitsCollection(nullptr) {
-    // Registrazione del nome della raccolta di hit
-    // Correctly add the first (and only) hits collection name
+CrystalSD::CrystalSD(const G4String& name, G4int nx, G4int ny, G4int nz)
+    : G4VSensitiveDetector(name),
+      fHitsCollection(nullptr),
+      fNcryX(nx),
+      fNcryY(ny),
+      fNlayer(nz)
+{
     collectionName.push_back("CrystalHitsCollection");
+
 }
 
-// Distruttore della classe CrystalSD
-CrystalSD::~CrystalSD() {
-    // Pulizia della memoria, se necessario
-   if(fHitsCollection) {
-        //delete fHitsCollection;
-        fHitsCollection = nullptr;
-   }
+CrystalSD::~CrystalSD()
+{
+    fHitsCollection = nullptr;  // SDManager owns the hits
 }
 
-// Metodo Initialize per l'inizializzazione della raccolta di hit
-void CrystalSD::Initialize(G4HCofThisEvent* hce) {
-    // Creazione di una nuova raccolta di hit
+void CrystalSD::Initialize(G4HCofThisEvent* hce)
+{
+    // Create hits collection
     fHitsCollection = new CrystalHitsCollection(SensitiveDetectorName, collectionName[0]);
 
-    // Ottieni l'ID della raccolta di hit
+    // Register the hits collection with the SD manager
     G4int hcID = G4SDManager::GetSDMpointer()->GetCollectionID(fHitsCollection);
-    
-    // Aggiunta della raccolta di hit all'evento corrente
     hce->AddHitsCollection(hcID, fHitsCollection);
+
+    // Clear map
+    fCrystalHitMap.clear();
+
+    // Pre-create hits for all crystals in this SD
+    for (G4int iz = 0; iz < fNlayer; ++iz) {
+        for (G4int iy = 0; iy < fNcryY; ++iy) {
+            for (G4int ix = 0; ix < fNcryX; ++ix) {
+                G4int id = ix + iy * fNcryX + iz * fNcryX * fNcryY;
+                CrystalHit* hit = new CrystalHit();
+                hit->SetIndices(ix, iy, iz);
+
+                // Absolute position in world coordinates
+                const G4VTouchable* touchable = nullptr;  // placeholder, real pos filled in ProcessHits
+                hit->SetPos(G4ThreeVector(0.,0.,0.));
+
+                fHitsCollection->insert(hit);
+                fCrystalHitMap.push_back(hit);
+            }
+        }
+    }
 }
 
-// Metodo ProcessHits per la gestione degli hit
-G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory* history) {
-    // Energia depositata nel passo
+G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
+{
     G4double edep = step->GetTotalEnergyDeposit();
-    if (edep == 0.0) return false;
+    if (edep == 0.) return false;
 
-    // Creazione di un nuovo hit
-    CrystalHit* newHit = new CrystalHit();
+    const G4VTouchable* touchable = step->GetPreStepPoint()->GetTouchable();
+    G4int crystalID = touchable->GetReplicaNumber(0);
 
-    // Identificazione del volume sensibile
-    const G4TouchableHistory* touchable = static_cast<const G4TouchableHistory*>(step->GetPreStepPoint()->GetTouchable());
-    G4int detID = touchable->GetReplicaNumber(0);  // Ottieni l'ID del volume
-    
-    // Assegna l'ID al hit
-    newHit->SetID(detID);
+    if (crystalID < 0 || crystalID >= static_cast<G4int>(fCrystalHitMap.size())) return false;
 
-    // Set dell'energia depositata nel nuovo hit
-    newHit->AddEnergy(edep);
+    // Add energy
+    fCrystalHitMap[crystalID]->AddEnergy(edep);
 
-    // Aggiunta del nuovo hit alla raccolta di hit
-    fHitsCollection->insert(newHit);
+    // Set absolute position (center of the step)
+    G4ThreeVector stepPos = step->GetPreStepPoint()->GetPosition();
+    fCrystalHitMap[crystalID]->SetPos(stepPos);
 
     return true;
-}
-
-// Metodo EndOfEvent per la gestione di fine evento
-void CrystalSD::EndOfEvent(G4HCofThisEvent* hce) {
-    // Verifica che la raccolta di hit esista
-    if (!fHitsCollection) {
-        G4ExceptionDescription msg;
-        msg << "No hits collection found in EndOfEvent.";
-        G4Exception("CrystalSD::EndOfEvent", "MyCode0001", FatalException, msg);
-    }
-
-    // Gestione degli hit alla fine dell'evento
-    G4int nofHits = fHitsCollection->entries();
-    if (nofHits > 0) {
-        //G4cout << "Number of hits: " << nofHits << G4endl;
-    }
 }

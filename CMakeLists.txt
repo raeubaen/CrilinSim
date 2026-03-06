@@ -34,25 +34,25 @@ set(SOURCES
     src/CrilinSim.cc
     src/CrystalHit.cc
     src/CrystalSD.cc
+    src/VirtualDetector.cc
     src/EventAction.cc
     src/SteppingAction.cc
     src/DetectorConstruction.cc
     src/PrimaryGeneratorAction.cc
     src/PrimaryGeneratorMessenger.cc
     src/RunAction.cc
-    src/CrystalHitsCollection.cc
 )
 
 set(HEADERS
     include/CrystalHit.hh
     include/CrystalSD.hh
+    include/VirtualDetector.hh
     include/EventAction.hh
     include/SteppingAction.hh
     include/DetectorConstruction.hh
     include/PrimaryGeneratorAction.hh
     include/PrimaryGeneratorMessenger.hh
     include/RunAction.hh
-    include/CrystalHitsCollection.hh
 )
 
 #----------------------------------------------------------------------------

@@ -4,25 +4,32 @@
 #include "G4VHit.hh"
 #include "G4THitsCollection.hh"
 #include "G4Allocator.hh"
+#include "G4ThreeVector.hh"
 
 class CrystalHit : public G4VHit {
 public:
-    CrystalHit();
-     virtual ~CrystalHit();
+    CrystalHit()
+        : ix(-1), iy(-1), iz(-1), pos(G4ThreeVector()), edep(0.) {}
+    virtual ~CrystalHit() {}
 
-    void AddEnergy(G4double energy);
-    G4double GetEnergyDep() const;
-    G4double GetTotalEnergy() const;
-    G4int GetID() const;
-    void SetID(G4int id); // Dichiarazione del setter
-    void Draw();
-    void Print() const;
+    // Setters
+    void SetIndices(G4int i, G4int j, G4int k) { ix=i; iy=j; iz=k; }
+    void SetPos(const G4ThreeVector& p) { pos = p; }
+    void AddEnergy(G4double e) { edep += e; }
+
+    // Getters
+    G4int GetIx() const { return ix; }
+    G4int GetIy() const { return iy; }
+    G4int GetIz() const { return iz; }
+    G4ThreeVector GetPos() const { return pos; }
+    G4double GetEnergyDep() const { return edep; }
 
 private:
-    G4double energyDep;
-  //    G4int id; BOH!
-    G4int fID; // ID del cristallo
-    G4double fTotalEnergy;   // Energia totale depositata
+    G4int ix, iy, iz;          // indices in the crystal grid
+    G4ThreeVector pos;         // absolute position in world coordinates
+    G4double edep;             // deposited energy
 };
+
+typedef G4THitsCollection<CrystalHit> CrystalHitsCollection;
 
 #endif

@@ -13,6 +13,7 @@
 #include "G4SystemOfUnits.hh"
 #include "G4VisAttributes.hh"
 #include "G4Colour.hh"
+#include "VirtualDetector.hh"
 
 // Constructor
 DetectorConstruction::DetectorConstruction()
@@ -108,10 +109,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4double wrapThickness = 0.01 * cm;
     //G4double honeycombThickness = 0.015 * cm;
     G4double honeycombThickness = 0.010 * cm;
-
-    int NcryX = 7;
-    int NcryY = 7;
-    int Nlayer = 5;
 
     G4Box* solidCrystal = new G4Box("Crystal", crystalSizeXY / 2, crystalSizeXY / 2, crystalLength / 2);
     fLogicCrystal = new G4LogicalVolume(solidCrystal, fCrystalMaterial, "Crystal");
@@ -366,12 +363,45 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4VisAttributes* kaptonStripVisAtt = new G4VisAttributes(G4Colour(1.0, 1.0, 0.0)); // Giallo
     logicKaptonStrip->SetVisAttributes(kaptonStripVisAtt);
 
+
+
+    // --- Virtual Detector parameters
+    G4double vdThickness = 1*mm;  // thin plane
+    G4double vdPosZ = - crilinsizez + vdThickness/2.0; // just after calorimeter
+
+    // Create the solid
+    G4Box* vdSolid = new G4Box("VD_solid", crilinsizex/2.0, crilinsizey/2.0, vdThickness/2.0);
+
+    // Get material safely
+    G4NistManager* nist = G4NistManager::Instance();
+    G4Material* vacuum = nist->FindOrBuildMaterial("G4_Galactic"); // Galactic = vacuum
+
+    // Create logical volume
+    G4LogicalVolume* vdLogic = new G4LogicalVolume(vdSolid, vacuum, "VD_logical");
+
+    // Place it in the world
+    new G4PVPlacement(nullptr,
+                      G4ThreeVector(0., 0., vdPosZ),
+                      vdLogic,
+                      "VD_phys",
+                      logicWorld,
+                      false,
+                      0,
+                      true); // checkOverlaps = true
+
+    // Attach sensitive detector
+    G4SDManager* SDman = G4SDManager::GetSDMpointer();
+    VirtualDetector* vd = new VirtualDetector("VD");
+    SDman->AddNewDetector(vd);
+    vdLogic->SetSensitiveDetector(vd);
+
     return physWorld;
+
 }
 
 void DetectorConstruction::ConstructSDandField() {
     // Creazione del rivelatore sensibile
-    CrystalSD* crystalSD = new CrystalSD("CrystalSD");
+    CrystalSD* crystalSD = new CrystalSD("CrystalSD", NcryX, NcryY, Nlayer);
 
     // Registrazione presso il SDManager
     G4SDManager::GetSDMpointer()->AddNewDetector(crystalSD);

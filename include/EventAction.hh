@@ -2,24 +2,30 @@
 #define EVENTACTION_HH
 
 #include "G4UserEventAction.hh"
-#include "G4AnalysisManager.hh"
+#include "RunAction.hh"
+#include <vector>
+#include "CrystalSD.hh"
 
-class CrystalHitCollection;
+class CrystalHit;
 
 class EventAction : public G4UserEventAction {
 public:
-    EventAction();
-    virtual ~EventAction();
+    EventAction(RunAction* runAction);
+    virtual ~EventAction() {}
 
     virtual void BeginOfEventAction(const G4Event* event) override;
     virtual void EndOfEventAction(const G4Event* event) override;
 
 private:
-    G4int fCrystalHCID;
-    G4AnalysisManager* analysisManager;
-    G4int eventID; // Aggiungi questa variabile membro per memorizzare l'ID dell'evento
-
+    RunAction* fRunAction;  // pointer to RunAction
+    CrystalSD* fCrystalSD;   // pointer to the SD
+    int fCrystalHCID;
+    G4int fNcryX;
+    G4int fNcryY;
+    G4int fNlayer;
+    std::vector<int> fHit_ix, fHit_iy, fHit_iz;
+    std::vector<double> fHit_x, fHit_y, fHit_z, fHit_E;
+    double fVDEnergy;
 };
 
-#endif // EVENTACTION_HH
-
+#endif

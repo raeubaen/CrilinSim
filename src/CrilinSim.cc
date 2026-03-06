@@ -21,8 +21,14 @@ int main(int argc, char** argv) {
 
     // Imposta le classi di azione utente
     runManager->SetUserAction(new PrimaryGeneratorAction());
-    runManager->SetUserAction(new RunAction());
-    runManager->SetUserAction(new EventAction());
+
+    // ... inside main
+    RunAction* runAction = new RunAction();
+    runManager->SetUserAction(runAction);
+
+    // pass runAction pointer to EventAction
+    EventAction* eventAction = new EventAction(runAction);
+    runManager->SetUserAction(eventAction);
     runManager->SetUserAction(new SteppingAction());
 
     // Inizializza la visualizzazione
