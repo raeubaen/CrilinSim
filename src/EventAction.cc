@@ -8,27 +8,23 @@
 EventAction::EventAction(RunAction* runAction)
 : G4UserEventAction(), fRunAction(runAction), fCrystalHCID(-1), fVDEnergy(0.0)
 {
- G4SDManager* sdman = G4SDManager::GetSDMpointer();
-    G4VSensitiveDetector* sd = sdman->FindSensitiveDetector("CrystalSD");
-    fCrystalSD = dynamic_cast<CrystalSD*>(sd);
-
-
-    if (fCrystalSD) {
-        fNcryX = fCrystalSD->GetNcryX();
-        fNcryY = fCrystalSD->GetNcryY();
-        fNlayer = fCrystalSD->GetNlayer();
-        G4cout << "EventAction: found CrystalSD with " 
-               << fNcryX << " x " << fNcryY << " x " << fNlayer << G4endl;
-    } else {
-        G4Exception("EventAction::EventAction()",
-                    "MyCode0002", JustWarning,
-                    "CrystalSD not found! Geometry info unavailable.");
-    }
-
+  fNcryX = -999;
 }
 
 void EventAction::BeginOfEventAction(const G4Event* event)
 {
+
+    if (fNcryX == -999){
+      G4SDManager* sdman = G4SDManager::GetSDMpointer();
+      fCrystalSD = dynamic_cast<CrystalSD*>(sdman->FindSensitiveDetector("CrystalSD"));
+
+      if (fCrystalSD) {
+          fNcryX  = fCrystalSD->GetNcryX();
+          fNcryY  = fCrystalSD->GetNcryY();
+          fNlayer = fCrystalSD->GetNlayer();
+      }
+    }
+
     fHit_ix.clear();
     fHit_iy.clear();
     fHit_iz.clear();
@@ -76,7 +72,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
             fHit_iy.push_back(hit->GetIy());
             fHit_iz.push_back(hit->GetIz());
 
-            G4ThreeVector center = fCrystalSD->GetCrystalCenter(hit->GetIx(), hit->GetIy(), hit->GetIz());
+            auto center = hit->GetPos();
             fHit_x.push_back(center.x());
             fHit_y.push_back(center.y());
             fHit_z.push_back(center.z());

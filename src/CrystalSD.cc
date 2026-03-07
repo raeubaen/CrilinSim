@@ -47,9 +47,7 @@ void CrystalSD::Initialize(G4HCofThisEvent* hce)
                 CrystalHit* hit = new CrystalHit();
                 hit->SetIndices(ix, iy, iz);
 
-                // Absolute position in world coordinates
-                const G4VTouchable* touchable = nullptr;  // placeholder, real pos filled in ProcessHits
-                hit->SetPos(G4ThreeVector(0.,0.,0.));
+                hit->SetPos(fGeometry->GetCrystalCenter(ix, iy, iz));
 
                 fHitsCollection->insert(hit);
                 fCrystalHitMap.push_back(hit);
@@ -70,10 +68,6 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     // Add energy
     fCrystalHitMap[crystalID]->AddEnergy(edep);
-
-    // Set absolute position (center of the step)
-    G4ThreeVector stepPos = step->GetPreStepPoint()->GetPosition();
-    fCrystalHitMap[crystalID]->SetPos(stepPos);
 
     return true;
 }

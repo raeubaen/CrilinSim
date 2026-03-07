@@ -6,6 +6,7 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "G4ThreeVector.hh"
 #include "globals.hh"
+#include "CrilinGeometry.hh"
 
 class G4LogicalVolume;
 class G4VPhysicalVolume;
@@ -32,6 +33,7 @@ private:
   int Nlayer = 5;
   void DefineMaterials();
   G4VPhysicalVolume* ConstructCalorimeter();
+  CrilinGeometry* fGeometry;
 };
 
 #endif

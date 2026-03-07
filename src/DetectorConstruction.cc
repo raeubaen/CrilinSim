@@ -17,7 +17,9 @@
 
 // Constructor
 DetectorConstruction::DetectorConstruction()
-: fCrystalMaterial(nullptr), fMylar(nullptr), fAluminum(nullptr), fFR4(nullptr), fSiPM(nullptr), fLogicCrystal(nullptr) {}
+: fCrystalMaterial(nullptr), fMylar(nullptr), fAluminum(nullptr), fFR4(nullptr), fSiPM(nullptr), fLogicCrystal(nullptr) {
+    fGeometry = new CrilinGeometry();
+}
 
 // Destructor
 DetectorConstruction::~DetectorConstruction() {}
@@ -229,15 +231,16 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
 
 													
     // }
+    fGeometry->SetPitch(pitch);
+    fGeometry->SetLayerStep(layerStep);
+    fGeometry->SetCrystalLength(crystalLength);
+    fGeometry->SetRefPosition(G4ThreeVector(x0, y0, z0));
+
     for (int k = 0; k < Nlayer; ++k) {
         for (int i = 0; i < NcryX; ++i) {
             for (int j = 0; j < NcryY; ++j) {
 
-                G4ThreeVector basePos(
-                    x0 + i * pitch,
-                    y0 + j * pitch,
-                    k * layerStep + crystalLength / 2.0 + z0
-                );
+                G4ThreeVector basePos = fGeometry->GetCrystalCenter(i, j, k);
 
             // Crystal
                 new G4PVPlacement(nullptr,
@@ -367,7 +370,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
 
     // --- Virtual Detector parameters
     G4double vdThickness = 1*mm;  // thin plane
-    G4double vdPosZ = - crilinsizez + vdThickness/2.0; // just after calorimeter
+    G4double vdPosZ = - crilinsizez - 5*cm + vdThickness/2.0; // just after calorimeter
 
     // Create the solid
     G4Box* vdSolid = new G4Box("VD_solid", crilinsizex/2.0, crilinsizey/2.0, vdThickness/2.0);
@@ -378,6 +381,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
 
     // Create logical volume
     G4LogicalVolume* vdLogic = new G4LogicalVolume(vdSolid, vacuum, "VD_logical");
+    vdLogic->SetVisAttributes(new G4VisAttributes(G4Colour(0, 0, 1.0)));
 
     // Place it in the world
     new G4PVPlacement(nullptr,
@@ -409,6 +413,6 @@ void DetectorConstruction::ConstructSDandField() {
     // Associazione del rivelatore sensibile ai volumi logici dei cristalli
     if (fLogicCrystal) {
         fLogicCrystal->SetSensitiveDetector(crystalSD);
+        crystalSD->SetGeometry(fGeometry);
     }
 }
-

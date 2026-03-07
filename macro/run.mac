@@ -1,8 +1,8 @@
 #/tracking/verbose 1
 
 /run/initialize
-/gun/particle e+
-/gun/energy 10 GeV
+/gun/particle mu+
+/gun/energy 1000 GeV
 /gun/position 0 0 20 cm
 /gun/direction 0 0 -1
 

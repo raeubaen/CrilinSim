@@ -7,6 +7,7 @@
 #include "G4VHit.hh"
 #include "globals.hh"
 #include "CrystalHit.hh"
+#include "CrilinGeometry.hh"
 
 class CrystalHit;  // Forward declaration
 
@@ -19,7 +20,7 @@ public:
     G4int GetNcryX() { return fNcryX; };
     G4int GetNcryY() { return fNcryY; };
     G4int GetNlayer() { return fNlayer; };
-    G4ThreeVector GetCrystalCenter(G4int ix, G4int iy, G4int iz) const;
+    void SetGeometry(CrilinGeometry *g) {fGeometry = g;};
 
 private:
     G4int fNcryX;
@@ -29,7 +30,7 @@ private:
     std::vector<CrystalHit*> fCrystalHitMap;
     G4double fCrystalPitchX, fCrystalPitchY, fCrystalPitchZ;
     G4ThreeVector fOrigin;
-
+    CrilinGeometry *fGeometry = nullptr;
 };
 
 #endif

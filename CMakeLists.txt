@@ -33,6 +33,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
 set(SOURCES
     src/CrilinSim.cc
     src/CrystalHit.cc
+    src/CrilinGeometry.cc
     src/CrystalSD.cc
     src/VirtualDetector.cc
     src/EventAction.cc
@@ -45,6 +46,7 @@ set(SOURCES
 
 set(HEADERS
     include/CrystalHit.hh
+    include/CrilinGeometry.hh
     include/CrystalSD.hh
     include/VirtualDetector.hh
     include/EventAction.hh
