@@ -14,6 +14,8 @@ EventAction::EventAction(RunAction* runAction)
 void EventAction::BeginOfEventAction(const G4Event* event)
 {
 
+    //std::cout << std::endl << "NEW EVENT" << std::endl;
+
     if (fNcryX == -999){
       G4SDManager* sdman = G4SDManager::GetSDMpointer();
       fCrystalSD = dynamic_cast<CrystalSD*>(sdman->FindSensitiveDetector("CrystalSD"));

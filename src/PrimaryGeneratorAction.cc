@@ -40,14 +40,14 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
     // Central position from /gun/position
-    G4ThreeVector center = fParticleGun->GetParticlePosition();
+    //G4ThreeVector center = fParticleGun->GetParticlePosition();
 
     // Gaussian smear in x and y only
-    G4double x = G4RandGauss::shoot(center.x(), fSigmaX);
-    G4double y = G4RandGauss::shoot(center.y(), fSigmaY);
-    G4double z = center.z();
+    //G4double x = G4RandGauss::shoot(center.x(), fSigmaX);
+    //G4double y = G4RandGauss::shoot(center.y(), fSigmaY);
+    //G4double z = center.z();
 
-    fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+    //fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
 
     // Energy and direction fully controlled by /gun/
     fParticleGun->GeneratePrimaryVertex(anEvent);

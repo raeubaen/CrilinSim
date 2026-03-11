@@ -237,8 +237,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     fGeometry->SetRefPosition(G4ThreeVector(x0, y0, z0));
 
     for (int k = 0; k < Nlayer; ++k) {
-        for (int i = 0; i < NcryX; ++i) {
-            for (int j = 0; j < NcryY; ++j) {
+        for (int j = 0; j < NcryY; ++j) {
+            for (int i = 0; i < NcryX; ++i) {
 
                 G4ThreeVector basePos = fGeometry->GetCrystalCenter(i, j, k);
 
@@ -370,7 +370,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
 
     // --- Virtual Detector parameters
     G4double vdThickness = 1*mm;  // thin plane
-    G4double vdPosZ = - crilinsizez - 5*cm + vdThickness/2.0; // just after calorimeter
+    G4double vdPosZ = - crilinsizez - 0.5*cm + vdThickness/2.0; // just after calorimeter
 
     // Create the solid
     G4Box* vdSolid = new G4Box("VD_solid", crilinsizex/2.0, crilinsizey/2.0, vdThickness/2.0);

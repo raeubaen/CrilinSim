@@ -63,7 +63,7 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     const G4VTouchable* touchable = step->GetPreStepPoint()->GetTouchable();
     G4int crystalID = touchable->GetReplicaNumber(0);
-
+    //std::cout << "crystalID beccato: " << crystalID << std::endl;
     if (crystalID < 0 || crystalID >= static_cast<G4int>(fCrystalHitMap.size())) return false;
 
     // Add energy
@@ -71,3 +71,4 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     return true;
 }
+
