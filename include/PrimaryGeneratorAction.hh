@@ -5,6 +5,7 @@
 #include "G4ThreeVector.hh"
 
 class G4ParticleGun;
+//class G4GeneralParticleSource;
 class PrimaryGeneratorMessenger;
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction

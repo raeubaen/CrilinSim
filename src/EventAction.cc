@@ -27,6 +27,7 @@ void EventAction::BeginOfEventAction(const G4Event* event)
       }
     }
 
+    fPrimaryEnergy = 0.0;
     fHit_ix.clear();
     fHit_iy.clear();
     fHit_iz.clear();
@@ -34,7 +35,12 @@ void EventAction::BeginOfEventAction(const G4Event* event)
     fHit_y.clear();
     fHit_z.clear();
     fHit_E.clear();
+    fHit_ECherenkov.clear();
+    fHit_EScintillation.clear();
     fVDEnergy = 0.0;
+    fETotal = 0.0;
+    fECherenkovTotal = 0.0;
+    fEScintillationTotal = 0.0;
 
     if(fCrystalHCID == -1)
         fCrystalHCID = G4SDManager::GetSDMpointer()->GetCollectionID("CrystalHitsCollection");
@@ -54,6 +60,11 @@ void EventAction::EndOfEventAction(const G4Event* event)
             auto hit = (*hitsCollection)[i];
             if (hit->GetEnergyDep() <= 0.) continue;
 
+	    //Compute total energy
+	    fETotal += hit->GetEnergyDep();
+	    fECherenkovTotal += hit->GetCherenkovEnergyDep();
+	    fEScintillationTotal += hit->GetScintillationEnergyDep();
+
             // Compute unique crystal ID
             int id = hit->GetIx() + hit->GetIy() * fNcryX + hit->GetIz() * fNcryX * fNcryY;
 
@@ -65,6 +76,8 @@ void EventAction::EndOfEventAction(const G4Event* event)
             } else {
                 // Accumulate energy for repeated hits
                 crystalMap[id]->AddEnergy(hit->GetEnergyDep());
+		crystalMap[id]->AddCherenkovEnergy(hit->GetCherenkovEnergyDep());
+		crystalMap[id]->AddScintillationEnergy(hit->GetScintillationEnergyDep());
             }
         }
 
@@ -80,6 +93,8 @@ void EventAction::EndOfEventAction(const G4Event* event)
             fHit_z.push_back(center.z());
 
             fHit_E.push_back(hit->GetEnergyDep() / CLHEP::MeV);
+ 	    fHit_ECherenkov.push_back(hit->GetCherenkovEnergyDep() / CLHEP::MeV);
+	    fHit_EScintillation.push_back(hit->GetScintillationEnergyDep() / CLHEP::MeV);
 
             delete hit;  // free the cloned hit
         }
@@ -89,8 +104,23 @@ void EventAction::EndOfEventAction(const G4Event* event)
     auto vd = static_cast<VirtualDetector*>(G4SDManager::GetSDMpointer()->FindSensitiveDetector("VD"));
     fVDEnergy = vd ? vd->GetTotalEnergy() / CLHEP::MeV : 0.;
 
+    //Energy of primary particle
+    
+    G4double PrimaryEnergy = 0.0;
+
+    G4PrimaryVertex* vertex = event->GetPrimaryVertex();
+    if (vertex) {
+    	G4PrimaryParticle* particle = vertex->GetPrimary();
+    	if (particle) {
+     		PrimaryEnergy = particle->GetTotalEnergy();
+		}
+    	}
+
+    std::cout << "Primary energy = " << PrimaryEnergy << std::endl;
+
     // --- Fill the tree via RunAction
     fRunAction->fEventID = event->GetEventID();
+    fRunAction->fPrimaryEnergy = PrimaryEnergy;
     fRunAction->fHit_ix = fHit_ix;
     fRunAction->fHit_iy = fHit_iy;
     fRunAction->fHit_iz = fHit_iz;
@@ -99,8 +129,13 @@ void EventAction::EndOfEventAction(const G4Event* event)
     fRunAction->fHit_y = fHit_y;
     fRunAction->fHit_z = fHit_z;
     fRunAction->fHit_E = fHit_E;
+    fRunAction->fHit_ECherenkov = fHit_ECherenkov;
+    fRunAction->fHit_EScintillation = fHit_EScintillation;
 
     fRunAction->fVDEnergy = fVDEnergy;
+    fRunAction->fETotal = fETotal;
+    fRunAction->fECherenkovTotal = fECherenkovTotal;
+    fRunAction->fEScintillationTotal = fEScintillationTotal;
 
     fRunAction->GetTree()->Fill();
 
@@ -112,5 +147,9 @@ void EventAction::EndOfEventAction(const G4Event* event)
     fHit_y.clear();
     fHit_z.clear();
     fHit_E.clear();
+    fHit_ECherenkov.clear();
+    fHit_EScintillation.clear();
     fVDEnergy = 0.;
+    fECherenkovTotal = 0.0;
+    fEScintillationTotal = 0.0;
 }

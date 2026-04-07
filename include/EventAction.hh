@@ -20,12 +20,16 @@ private:
     RunAction* fRunAction;  // pointer to RunAction
     CrystalSD* fCrystalSD;   // pointer to the SD
     int fCrystalHCID;
+    G4double fPrimaryEnergy;
     G4int fNcryX;
     G4int fNcryY;
     G4int fNlayer;
     std::vector<int> fHit_ix, fHit_iy, fHit_iz;
-    std::vector<double> fHit_x, fHit_y, fHit_z, fHit_E;
+    std::vector<double> fHit_x, fHit_y, fHit_z, fHit_E, fHit_ECherenkov, fHit_EScintillation;
     double fVDEnergy;
+    double fETotal;
+    double fECherenkovTotal;
+    double fEScintillationTotal;
 };
 
 #endif

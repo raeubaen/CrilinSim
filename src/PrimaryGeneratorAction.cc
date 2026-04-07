@@ -16,16 +16,16 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   fSigmaY(2.32*mm)
 {
     // Default particle: electron
-    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particle = particleTable->FindParticle("e-");
-    fParticleGun->SetParticleDefinition(particle);
+    //G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+    //G4ParticleDefinition* particle = particleTable->FindParticle("e-");
+    //fParticleGun->SetParticleDefinition(particle);
 
     // Default direction along -z
-    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));
-    fParticleGun->SetParticleEnergy(240*MeV);
+    //fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., -1.));
+    //fParticleGun->SetParticleEnergy(240*MeV);
 
     // Default position center (will be smeared in GeneratePrimaries)
-    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 30*cm));
+    //fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 30*cm));
 
     // Create messenger to control sigmaX/Y
     fMessenger = new PrimaryGeneratorMessenger(this);
@@ -48,7 +48,14 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     //G4double z = center.z();
 
     //fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+  
+    //Uniform energy distribution
+    G4double E_min = 1.0*GeV;
+    G4double E_max = 100.0*GeV;
+    G4double energy = G4UniformRand() * (E_max - E_min) + E_min;
 
-    // Energy and direction fully controlled by /gun/
+    fParticleGun->SetParticleEnergy(energy);
+
     fParticleGun->GeneratePrimaryVertex(anEvent);
+
 }

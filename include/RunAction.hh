@@ -17,7 +17,11 @@ public:
     // Tree & file are public so EventAction can fill them
     // Branch data
     int fEventID;
+    double fPrimaryEnergy;
     double fVDEnergy;
+    double fETotal;
+    double fECherenkovTotal;
+    double fEScintillationTotal;
 
     std::vector<int> fHit_ix;
     std::vector<int> fHit_iy;
@@ -28,6 +32,8 @@ public:
     std::vector<double> fHit_z;
 
     std::vector<double> fHit_E;
+    std::vector<double> fHit_ECherenkov;
+    std::vector<double> fHit_EScintillation;
 private:
     TTree *fTree;
     TFile *fOutFile;

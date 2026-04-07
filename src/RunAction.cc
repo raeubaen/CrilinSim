@@ -11,8 +11,10 @@ RunAction::RunAction()
 
 RunAction::~RunAction()
 {
-        fOutFile->Close();
+	if(fOutFile) {
+        if(fOutFile->IsOpen()) fOutFile->Close();
         delete fOutFile;
+	}
 }
 
 void RunAction::BeginOfRunAction(const G4Run*)
@@ -21,7 +23,12 @@ void RunAction::BeginOfRunAction(const G4Run*)
     fTree = new TTree("events","events per event");
 
     fTree->Branch("EventID", &fEventID);
+    fTree->Branch("PrimaryEnergy", &fPrimaryEnergy);
     fTree->Branch("VD_energy", &fVDEnergy);
+
+    fTree->Branch("EnergyTotal", &fETotal);
+    fTree->Branch("CherenkovEnergyTotal", &fECherenkovTotal);
+    fTree->Branch("ScintillationEnergyTotal", &fEScintillationTotal);
 
     fTree->Branch("Hit_ix", &fHit_ix);
     fTree->Branch("Hit_iy", &fHit_iy);
@@ -32,6 +39,8 @@ void RunAction::BeginOfRunAction(const G4Run*)
     fTree->Branch("Hit_z", &fHit_z);
 
     fTree->Branch("Hit_E", &fHit_E);
+    fTree->Branch("Hit_ECherenkov", &fHit_ECherenkov);
+    fTree->Branch("Hit_EScintillation", &fHit_EScintillation);
 }
 
 void RunAction::EndOfRunAction(const G4Run*)
