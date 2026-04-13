@@ -68,7 +68,7 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     //Compute energy released via Cherenkov light
 
-    G4double edepCh = 0;
+    G4double nCh = 0;
     G4double edepSc = 0;
 
     G4double length = step->GetStepLength(); // dx (mm)
@@ -85,10 +85,10 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
     	G4double beta = p / E; //beta
 
     	//Typical energy range for the PDE peak of a SiPM
-    	G4double Emin = 2.0e-6; //MeV, corresponds to 620 nm
-    	G4double Emax = 3.1e-6; //MeV, corresponds to 400 nm 
+    	G4double lambda_min = 350e-6; //mm, corresponds to 350 nm
+    	G4double lambda_max = 550e-6; //mm, corresponds to 550 nm 
 
-    	edepCh = length * 0.232 * charge * charge * (1. - 1./(beta*beta*n*n)) * 0.5 * (Emax*Emax-Emin*Emin); //energy released as Cherenkov light in MeV
+    	nCh = length * 0.0459 * charge * charge * (1. - 1./(beta*beta*n*n)) * (1./lambda_min-1./lambda_max); //number of Cherenkov photons
 
     	//Compute scintillation energy, assuming Birks law parameters for PbWO4. Ioniziation is similar for PbF2 and PbWO4
 
@@ -102,7 +102,7 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     // Add energy
     fCrystalHitMap[crystalID]->AddEnergy(edep);
-    fCrystalHitMap[crystalID]->AddCherenkovEnergy(edepCh);
+    fCrystalHitMap[crystalID]->AddNCherenkov(nCh);
     fCrystalHitMap[crystalID]->AddScintillationEnergy(edepSc);
 
     return true;

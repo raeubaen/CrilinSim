@@ -27,7 +27,7 @@ void RunAction::BeginOfRunAction(const G4Run*)
     fTree->Branch("VD_energy", &fVDEnergy);
 
     fTree->Branch("EnergyTotal", &fETotal);
-    fTree->Branch("CherenkovEnergyTotal", &fECherenkovTotal);
+    fTree->Branch("NCherenkovTotal", &fNCherenkovTotal);
     fTree->Branch("ScintillationEnergyTotal", &fEScintillationTotal);
 
     fTree->Branch("Hit_ix", &fHit_ix);
@@ -39,7 +39,7 @@ void RunAction::BeginOfRunAction(const G4Run*)
     fTree->Branch("Hit_z", &fHit_z);
 
     fTree->Branch("Hit_E", &fHit_E);
-    fTree->Branch("Hit_ECherenkov", &fHit_ECherenkov);
+    fTree->Branch("Hit_NCherenkov", &fHit_NCherenkov);
     fTree->Branch("Hit_EScintillation", &fHit_EScintillation);
 }
 

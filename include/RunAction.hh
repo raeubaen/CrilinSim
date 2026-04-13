@@ -20,7 +20,7 @@ public:
     double fPrimaryEnergy;
     double fVDEnergy;
     double fETotal;
-    double fECherenkovTotal;
+    double fNCherenkovTotal;
     double fEScintillationTotal;
 
     std::vector<int> fHit_ix;
@@ -32,7 +32,7 @@ public:
     std::vector<double> fHit_z;
 
     std::vector<double> fHit_E;
-    std::vector<double> fHit_ECherenkov;
+    std::vector<double> fHit_NCherenkov;
     std::vector<double> fHit_EScintillation;
 private:
     TTree *fTree;

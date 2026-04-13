@@ -25,10 +25,10 @@ private:
     G4int fNcryY;
     G4int fNlayer;
     std::vector<int> fHit_ix, fHit_iy, fHit_iz;
-    std::vector<double> fHit_x, fHit_y, fHit_z, fHit_E, fHit_ECherenkov, fHit_EScintillation;
+    std::vector<double> fHit_x, fHit_y, fHit_z, fHit_E, fHit_NCherenkov, fHit_EScintillation;
     double fVDEnergy;
     double fETotal;
-    double fECherenkovTotal;
+    double fNCherenkovTotal;
     double fEScintillationTotal;
 };
 

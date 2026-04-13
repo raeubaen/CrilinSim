@@ -35,11 +35,11 @@ void EventAction::BeginOfEventAction(const G4Event* event)
     fHit_y.clear();
     fHit_z.clear();
     fHit_E.clear();
-    fHit_ECherenkov.clear();
+    fHit_NCherenkov.clear();
     fHit_EScintillation.clear();
     fVDEnergy = 0.0;
     fETotal = 0.0;
-    fECherenkovTotal = 0.0;
+    fNCherenkovTotal = 0.0;
     fEScintillationTotal = 0.0;
 
     if(fCrystalHCID == -1)
@@ -62,7 +62,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
 
 	    //Compute total energy
 	    fETotal += hit->GetEnergyDep();
-	    fECherenkovTotal += hit->GetCherenkovEnergyDep();
+	    fNCherenkovTotal += hit->GetNCherenkov();
 	    fEScintillationTotal += hit->GetScintillationEnergyDep();
 
             // Compute unique crystal ID
@@ -76,7 +76,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
             } else {
                 // Accumulate energy for repeated hits
                 crystalMap[id]->AddEnergy(hit->GetEnergyDep());
-		crystalMap[id]->AddCherenkovEnergy(hit->GetCherenkovEnergyDep());
+		crystalMap[id]->AddNCherenkov(hit->GetNCherenkov());
 		crystalMap[id]->AddScintillationEnergy(hit->GetScintillationEnergyDep());
             }
         }
@@ -93,7 +93,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
             fHit_z.push_back(center.z());
 
             fHit_E.push_back(hit->GetEnergyDep() / CLHEP::MeV);
- 	    fHit_ECherenkov.push_back(hit->GetCherenkovEnergyDep() / CLHEP::MeV);
+ 	    fHit_NCherenkov.push_back(hit->GetNCherenkov());
 	    fHit_EScintillation.push_back(hit->GetScintillationEnergyDep() / CLHEP::MeV);
 
             delete hit;  // free the cloned hit
@@ -116,7 +116,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
 		}
     	}
 
-    std::cout << "Primary energy = " << PrimaryEnergy << std::endl;
+    std::cout << "Event ID = " << event->GetEventID() << " Primary energy = " << PrimaryEnergy << std::endl;
 
     // --- Fill the tree via RunAction
     fRunAction->fEventID = event->GetEventID();
@@ -129,12 +129,12 @@ void EventAction::EndOfEventAction(const G4Event* event)
     fRunAction->fHit_y = fHit_y;
     fRunAction->fHit_z = fHit_z;
     fRunAction->fHit_E = fHit_E;
-    fRunAction->fHit_ECherenkov = fHit_ECherenkov;
+    fRunAction->fHit_NCherenkov = fHit_NCherenkov;
     fRunAction->fHit_EScintillation = fHit_EScintillation;
 
     fRunAction->fVDEnergy = fVDEnergy;
     fRunAction->fETotal = fETotal;
-    fRunAction->fECherenkovTotal = fECherenkovTotal;
+    fRunAction->fNCherenkovTotal = fNCherenkovTotal;
     fRunAction->fEScintillationTotal = fEScintillationTotal;
 
     fRunAction->GetTree()->Fill();
@@ -147,9 +147,9 @@ void EventAction::EndOfEventAction(const G4Event* event)
     fHit_y.clear();
     fHit_z.clear();
     fHit_E.clear();
-    fHit_ECherenkov.clear();
+    fHit_NCherenkov.clear();
     fHit_EScintillation.clear();
     fVDEnergy = 0.;
-    fECherenkovTotal = 0.0;
+    fNCherenkovTotal = 0.0;
     fEScintillationTotal = 0.0;
 }
