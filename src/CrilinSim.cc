@@ -8,10 +8,22 @@
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "SteppingAction.hh"
-
+#include "Randomize.hh"
+#include <chrono>
 #include "QGSP_BERT.hh"
 
 int main(int argc, char** argv) {
+
+
+    auto seed =
+        std::chrono::high_resolution_clock::now()
+            .time_since_epoch()
+            .count();
+
+
+    CLHEP::HepRandom::setTheSeed(seed);
+
+
     // Costruisci il gestore di run predefinito
     G4RunManager* runManager = new G4RunManager();
 
@@ -23,7 +35,7 @@ int main(int argc, char** argv) {
     runManager->SetUserAction(new PrimaryGeneratorAction());
 
     // ... inside main
-    RunAction* runAction = new RunAction();
+    RunAction* runAction = new RunAction(argv[2]);
     runManager->SetUserAction(runAction);
 
     // pass runAction pointer to EventAction

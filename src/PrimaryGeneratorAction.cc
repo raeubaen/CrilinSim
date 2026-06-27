@@ -12,8 +12,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 : G4VUserPrimaryGeneratorAction(),
   fParticleGun(new G4ParticleGun(1)),
   fMessenger(nullptr),
-  fSigmaX(2.65*mm),
-  fSigmaY(2.32*mm)
+  fSigmaX(0*mm),
+  fSigmaY(0*mm)
 {
     // Default particle: electron
     //G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
@@ -40,22 +40,24 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
     // Central position from /gun/position
-    //G4ThreeVector center = fParticleGun->GetParticlePosition();
+    G4ThreeVector center = fParticleGun->GetParticlePosition();
 
     // Gaussian smear in x and y only
-    //G4double x = G4RandGauss::shoot(center.x(), fSigmaX);
-    //G4double y = G4RandGauss::shoot(center.y(), fSigmaY);
-    //G4double z = center.z();
+    G4double x = center.x() + (2.0 * G4UniformRand() - 1.0) * 2.5 * mm;
+    G4double y = center.y() + (2.0 * G4UniformRand() - 1.0) * 2.5 * mm;
+    G4double z = center.z();
 
-    //fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
-  
+    fParticleGun->SetParticlePosition(G4ThreeVector(x, y, z));
+
     //Uniform energy distribution
-    G4double E_min = 1.0*GeV;
-    G4double E_max = 100.0*GeV;
-    G4double energy = G4UniformRand() * (E_max - E_min) + E_min;
+    //G4double E_min = 30*GeV;
+    //G4double E_max = 100.0*GeV;
+    G4double energy = 99 * GeV; //G4UniformRand() * (E_max - E_min) + E_min;
 
     fParticleGun->SetParticleEnergy(energy);
 
     fParticleGun->GeneratePrimaryVertex(anEvent);
+
+    fParticleGun->SetParticlePosition(center);
 
 }

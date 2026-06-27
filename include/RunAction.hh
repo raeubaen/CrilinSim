@@ -8,7 +8,7 @@
 
 class RunAction : public G4UserRunAction {
 public:
-    RunAction();
+    RunAction(char*);
     virtual ~RunAction();
 
     virtual void BeginOfRunAction(const G4Run*) override;
@@ -17,7 +17,7 @@ public:
     // Tree & file are public so EventAction can fill them
     // Branch data
     int fEventID;
-    double fPrimaryEnergy;
+    double fPrimaryEnergy, fVertexX, fVertexY, fVertexZ;
     double fVDEnergy;
     double fETotal;
     double fNCherenkovTotal;
@@ -37,5 +37,6 @@ public:
 private:
     TTree *fTree;
     TFile *fOutFile;
+    char *fFileName;
 };
 #endif

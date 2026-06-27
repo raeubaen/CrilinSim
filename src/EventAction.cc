@@ -28,6 +28,9 @@ void EventAction::BeginOfEventAction(const G4Event* event)
     }
 
     fPrimaryEnergy = 0.0;
+    fVertexX = 0.0;
+    fVertexY = 0.0;
+    fVertexZ = 0.0;
     fHit_ix.clear();
     fHit_iy.clear();
     fHit_iz.clear();
@@ -105,14 +108,17 @@ void EventAction::EndOfEventAction(const G4Event* event)
     fVDEnergy = vd ? vd->GetTotalEnergy() / CLHEP::MeV : 0.;
 
     //Energy of primary particle
-    
-    G4double PrimaryEnergy = 0.0;
 
+    G4double PrimaryEnergy = 0.0;
+    G4double x_v=0.0, y_v=0.0, z_v=0.0;
     G4PrimaryVertex* vertex = event->GetPrimaryVertex();
     if (vertex) {
     	G4PrimaryParticle* particle = vertex->GetPrimary();
     	if (particle) {
      		PrimaryEnergy = particle->GetTotalEnergy();
+        x_v = vertex->GetX0();
+        y_v = vertex->GetY0();
+        z_v = vertex->GetZ0();
 		}
     	}
 
@@ -121,6 +127,10 @@ void EventAction::EndOfEventAction(const G4Event* event)
     // --- Fill the tree via RunAction
     fRunAction->fEventID = event->GetEventID();
     fRunAction->fPrimaryEnergy = PrimaryEnergy;
+    fRunAction->fVertexX = x_v;
+    fRunAction->fVertexY = y_v;
+    fRunAction->fVertexZ = z_v;
+
     fRunAction->fHit_ix = fHit_ix;
     fRunAction->fHit_iy = fHit_iy;
     fRunAction->fHit_iz = fHit_iz;

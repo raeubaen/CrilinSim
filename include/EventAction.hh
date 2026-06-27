@@ -20,7 +20,7 @@ private:
     RunAction* fRunAction;  // pointer to RunAction
     CrystalSD* fCrystalSD;   // pointer to the SD
     int fCrystalHCID;
-    G4double fPrimaryEnergy;
+    G4double fPrimaryEnergy, fVertexX, fVertexY, fVertexZ;
     G4int fNcryX;
     G4int fNcryY;
     G4int fNlayer;

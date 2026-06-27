@@ -92,13 +92,15 @@ G4bool CrystalSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
     	//Compute scintillation energy, assuming Birks law parameters for PbWO4. Ioniziation is similar for PbF2 and PbWO4
 
-    	G4double S = 200; //photons/MeV
-    	G4double kB = 0.005; //mm/MeV
+    	//G4double S = 200; //photons/MeV
+    	//G4double kB = 0.005; //mm/MeV
 
-    	G4double lightyield = S*edep/(1+kB*edep/length); //photons per MeV
-    	edepSc = 2.95e-6 * lightyield; //assuming PbWO4 scintillation peak at 420 nm, 2.95 eV per photon  
+    	//G4double lightyield = S*edep/(1+kB*edep/length); //photons per MeV
+    	//edepSc = 2.95e-6 * lightyield; //assuming PbWO4 scintillation peak at 420 nm, 2.95 eV per photon  
 
-    	}
+      edepSc = 0;
+      if (step->GetTrack()->GetParentID() != 0) edepSc = nCh;
+    }
 
     // Add energy
     fCrystalHitMap[crystalID]->AddEnergy(edep);

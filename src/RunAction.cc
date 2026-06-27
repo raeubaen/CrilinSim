@@ -1,12 +1,13 @@
 #include "RunAction.hh"
 #include "G4Run.hh"
 
-RunAction::RunAction()
+RunAction::RunAction(char *fFileName)
 : G4UserRunAction(),
   fOutFile(nullptr),
   fTree(nullptr),
   fEventID(0),
-  fVDEnergy(0.0)
+  fVDEnergy(0.0),
+  fFileName(fFileName)
 {}
 
 RunAction::~RunAction()
@@ -19,7 +20,7 @@ RunAction::~RunAction()
 
 void RunAction::BeginOfRunAction(const G4Run*)
 {
-    fOutFile = new TFile("../data/output.root","RECREATE");
+    fOutFile = new TFile(fFileName, "RECREATE");
     fTree = new TTree("events","events per event");
 
     fTree->Branch("EventID", &fEventID);
@@ -33,6 +34,11 @@ void RunAction::BeginOfRunAction(const G4Run*)
     fTree->Branch("Hit_ix", &fHit_ix);
     fTree->Branch("Hit_iy", &fHit_iy);
     fTree->Branch("Hit_iz", &fHit_iz);
+
+    fTree->Branch("Vertex_x", &fVertexX);
+    fTree->Branch("Vertex_y", &fVertexY);
+    fTree->Branch("Vertex_z", &fVertexZ);
+
 
     fTree->Branch("Hit_x", &fHit_x);
     fTree->Branch("Hit_y", &fHit_y);

@@ -80,10 +80,10 @@ void DetectorConstruction::DefineMaterials() {
 
     // Definizione del materiale Kapton (poliimmide)
     fKapton = nist->FindOrBuildMaterial("G4_KAPTON");
-    
+
     /////////////////////
     /////////////////////
-    
+
     // Assign the defined materials to member variables
     fCrystalMaterial = PbF2;
     //fFR4 = nist->FindOrBuildMaterial("G4_POLYETHYLENE"); // Approximation for FR4 // IVANO (credo sbagliato)
@@ -128,11 +128,11 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4Box* solidHoneycomb = new G4Box("Honeycomb", honeywrapcrystalSizeXY / 2, honeywrapcrystalSizeXY / 2, crystalLength / 2);
     G4SubtractionSolid* solidCrystalHoneycomb = new G4SubtractionSolid("CrystalHoneycomb", solidHoneycomb, solidWrap, nullptr, G4ThreeVector());
     G4LogicalVolume* logicHoneycomb = new G4LogicalVolume(solidCrystalHoneycomb, fAluminum, "Honeycomb");
-    
+
     // Electronics
-    G4double electronicsThickness = 0.2 * cm; 
+    G4double electronicsThickness = 0.5 * cm;
     G4Box* solidElectronics = new G4Box("Electronics", (NcryX * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, (NcryY * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, electronicsThickness / 2);
-    G4LogicalVolume* logicElectronics = new G4LogicalVolume(solidElectronics, fFR4, "Electronics");
+    G4LogicalVolume* logicElectronics = new G4LogicalVolume(solidElectronics, fAluminum, "Electronics");
 
     // SiPMs 
     G4double siPMSizeXY = 0.3 * cm;
