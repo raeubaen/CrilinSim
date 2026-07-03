@@ -6,6 +6,13 @@ import ROOT
 import tensorflow as tf
 from tensorflow.keras import layers, Model
 
+def rel_energy_bias(y_true, y_pred):
+    return tf.reduce_mean((y_pred / (y_true + 1e-12)) - 1.0)
+
+def rel_energy_bias_rms(y_true, y_pred):
+    rel = (y_pred / (y_true + 1e-12)) - 1.0
+    return tf.sqrt(tf.reduce_mean(tf.square(rel)))
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Pion gun analysis"
@@ -22,13 +29,6 @@ def parse_args():
         type=float,
         default=0.2, #pe
         help="photo-electrons for Poissonian smearing"
-    )
-
-    parser.add_argument(
-        "--noise",
-        type=float,
-        default=0.,
-        help="Gaussian noise value"
     )
 
     parser.add_argument(
@@ -138,50 +138,49 @@ def main():
     gpus = tf.config.list_physical_devices('GPU')
     tf.config.set_visible_devices(gpus, 'GPU')
     args = parse_args()
-    
-    try:
-        tree = uproot.open(f"{args.file}:events")
-        #arrays = tree.arrays(["EventID","VD_energy","Hit_x","Hit_y","Hit_z","Hit_E"], library="np")
-        arrays = tree.arrays()
-        EventID   = arrays["EventID"].to_numpy()
-        VD_energy = arrays["VD_energy"].to_numpy()/1e3
-        PrimaryEnergy = arrays["PrimaryEnergy"].to_numpy()/1e3
-        max_hits = 7*7*5 #nchannels
 
-        # pad events to same length
-        Hit_x_pad = ak.pad_none(arrays["Hit_x"], max_hits)
-        Hit_y_pad = ak.pad_none(arrays["Hit_y"], max_hits)
-        Hit_z_pad = ak.pad_none(arrays["Hit_z"], max_hits)
-        Hit_N_pad = ak.pad_none(arrays["Hit_NCherenkov"], max_hits)
-        x = ak.to_numpy(ak.fill_none(Hit_x_pad, 0))
-        y = ak.to_numpy(ak.fill_none(Hit_y_pad, 0))
-        z = ak.to_numpy(ak.fill_none(Hit_z_pad, 0))
-        N = ak.to_numpy(ak.fill_none(Hit_N_pad, 0))
+    print(f"{args.file}:events")
 
-        print(VD_energy, x.shape)
+    tree = uproot.open(f"{args.file}:events")
+    #arrays = tree.arrays(["EventID","VD_energy","Hit_x","Hit_y","Hit_z","Hit_E"], library="np")
+    arrays = tree.arrays()
+    EventID   = arrays["EventID"].to_numpy()
+    VD_energy = arrays["VD_energy"].to_numpy()/1e3
+    PrimaryEnergy = arrays["PrimaryEnergy"].to_numpy()/1e3
+    max_hits = 7*7*5 #nchannels
 
-    except (KeyError, ValueError, IndexError):
-        print("Tree not found")
-        exit(1)
-    
-    #optical transport and quantum efficiency, calibrated with electrons for having 1 pe/MeV
+    # pad events to same length
+    Hit_x_pad = ak.pad_none(arrays["Hit_x"], max_hits)
+    Hit_y_pad = ak.pad_none(arrays["Hit_y"], max_hits)
+    Hit_z_pad = ak.pad_none(arrays["Hit_z"], max_hits)
+    Hit_N_pad = ak.pad_none(arrays["Hit_NCherenkov"], max_hits)
+    x = ak.to_numpy(ak.fill_none(Hit_x_pad, 0))
+    y = ak.to_numpy(ak.fill_none(Hit_y_pad, 0))
+    z = ak.to_numpy(ak.fill_none(Hit_z_pad, 0))
+    N = ak.to_numpy(ak.fill_none(Hit_N_pad, 0))
+
+    print(VD_energy, x.shape)
+
+    #optical transport and quantum efficiency, calibrated with electrons for having 1 pe/MeV, to do in MeV...
     eff = 0.0451516
 
-    N = (np.random.poisson(eff * N))
-    underthre_mask = N<50.0 #to cut the MIPs
-    N[underthre_mask]=0
+    E = (np.random.poisson(eff * N * args.pe)/args.pe)/1e3 # now GeV, like all other energies
+    underthre_mask = N<0.05 #to cut the MIPs
+    E[underthre_mask]=0
     x[underthre_mask]=0
     y[underthre_mask]=0
     z[underthre_mask]=0
 
-    N_sum = np.sum(N, axis=1)
-    print("N sum shape", N_sum.shape)
-    
-    X = np.stack([x, y, z, N], axis=-1)[N_sum > 500.0, :, :]   #
-    y_target = (PrimaryEnergy-VD_energy)[N_sum > 500.0]
+    E_ref = 30
+
+    E_sum = np.sum(E, axis=1)
+    print("N sum shape", E_sum.shape)
+
+    X = np.stack([x, y, z, E/E_ref], axis=-1)[E_sum > 0.5, :, :]   #
+    y_target = (PrimaryEnergy-VD_energy)[E_sum > 0.5] / E_ref
     model = build_particlenet(maxhits=max_hits)
     if args.train == True:
-        model.compile( optimizer=tf.keras.optimizers.Adam(1e-4), loss='mse', metrics=['mae'])
+        model.compile( optimizer=tf.keras.optimizers.Adam(1e-4), loss='mse', metrics=[rel_energy_bias, rel_energy_bias_rms])
         model.summary()
         checkpoint = tf.keras.callbacks.ModelCheckpoint(
             "particlenet_weights.weights.h5",
@@ -195,7 +194,7 @@ def main():
         print("Loading weights from particlenet_weights.weights.h5")
         model.load_weights("particlenet_weights.weights.h5")
 
-    
+
     #resolution = np.std((pred.flatten()-y_target)/y_target)
     #print("Energy resolution:", resolution)
     pred = model.predict(X).flatten()
@@ -204,8 +203,8 @@ def main():
     print("Energy resolution:", resolution)
     
     
-    pred_to_write = np.zeros((N.shape[0],))
-    pred_to_write[N_sum > 500.0] = pred
+    pred_to_write = np.zeros((E.shape[0],))
+    pred_to_write[E_sum > 0.5] = pred
 
     events_ak = ak.zip({
         "EventID": EventID,
@@ -229,3 +228,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
