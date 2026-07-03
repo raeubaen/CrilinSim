@@ -52,7 +52,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     //Uniform energy distribution
     //G4double E_min = 30*GeV;
     //G4double E_max = 100.0*GeV;
-    G4double energy = 99 * GeV; //G4UniformRand() * (E_max - E_min) + E_min;
+    G4double energy = 150 * GeV; //G4UniformRand() * (E_max - E_min) + E_min;
 
     fParticleGun->SetParticleEnergy(energy);
 
