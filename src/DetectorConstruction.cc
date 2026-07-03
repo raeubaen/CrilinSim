@@ -130,10 +130,19 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4LogicalVolume* logicHoneycomb = new G4LogicalVolume(solidCrystalHoneycomb, fAluminum, "Honeycomb");
 
     // Electronics
-    G4double electronicsThickness = 0.5 * cm;
+    G4double electronicsThickness = 0.1 * cm;
     G4Box* solidElectronics = new G4Box("Electronics", (NcryX * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, (NcryY * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, electronicsThickness / 2);
-    G4LogicalVolume* logicElectronics = new G4LogicalVolume(solidElectronics, fAluminum, "Electronics");
+    G4LogicalVolume* logicElectronics = new G4LogicalVolume(solidElectronics, fFR4, "Electronics");
 
+    //Alu layer closure                                                                                                                                     
+    G4double AluCapThickness = 0.4 * cm;
+    G4Box* solidAluCap = new G4Box("AluCap", (NcryX * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, (NcryY * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, AluCapThickness / 2);
+    G4LogicalVolume* logicAluCap = new G4LogicalVolume(solidAluCap, fAluminum, "AluCap");
+    //Alu matrix closure //2 mm alu more, just for the first layer
+    G4double AluClosureThickness = 0.2 * cm;
+    G4Box* solidAluClosure = new G4Box("AluClosure", (NcryX * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, (NcryY * honeywrapcrystalSizeXY) / 2 + 1.0 * mm, AluCapThickness / 2);
+    G4LogicalVolume* logicAluClosure = new G4LogicalVolume(solidAluClosure, fAluminum, "AluClosure");
+    
     // SiPMs 
     G4double siPMSizeXY = 0.3 * cm;
     G4double siPMThickness = 0.2 * cm;
@@ -181,7 +190,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4double pitch=honeywrapcrystalSizeXY;
     G4double crilinsizex=NcryX*pitch+2*aluminumThickness;
     G4double crilinsizey=NcryY*pitch+2*aluminumThickness+Nlayer*kaptonThickness;
-    G4double crilinsizez=Nlayer*(crystalLength+siPMThickness+electronicsThickness);
+    G4double crilinsizez=Nlayer*(crystalLength+siPMThickness+electronicsThickness+AluCapThickness)+AluClosureThickness;
 
     G4Box* solidCrilin = new G4Box("solidCrilin", 0.5*crilinsizex,0.5*crilinsizey,0.5*(crilinsizez+4*mm));
     G4LogicalVolume* logicCrilin = new G4LogicalVolume(solidCrilin, logicWorld->GetMaterial(), "logicCrilin");
@@ -190,10 +199,12 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
     G4ThreeVector wrapPos = crystalPos;
     G4ThreeVector honeycombPos = wrapPos;
     G4ThreeVector electronicsPos(0, 0, crystalLength + siPMThickness + electronicsThickness / 2);
+    G4ThreeVector AluCapPos(0, 0, crystalLength + siPMThickness + electronicsThickness +AluCapThickness/ 2);
+    G4ThreeVector AluClosurePos(0, 0, crystalLength + siPMThickness + electronicsThickness +AluCapThickness+ AluClosureThickness/ 2);
     G4ThreeVector aluminumPos(0, 0, crystalLength / 2);
     G4ThreeVector kaptonStripPos(0, (NcryY * honeywrapcrystalSizeXY + 2 * aluminumThickness) / 2 - aluminumTopScavo + 0.01 * mm + kaptonThickness / 2 , (crystalLength + siPMThickness) / 2  );
     //G4double pitch = honeywrapcrystalSizeXY;
-    G4double layerStep = crystalLength + siPMThickness + electronicsThickness;
+    G4double layerStep = crystalLength + siPMThickness + electronicsThickness+ AluCapThickness;
 
     // Centering offsets (XY only)
     G4double x0 = - (NcryX - 1) * pitch / 2.0;
@@ -306,7 +317,38 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
                       logicCrilin,
                       false,
                       k);
+    //AluCap closure
+    G4ThreeVector AluCapPos(
+        0,
+        0,
+        k * layerStep + crystalLength + z0+ siPMThickness + electronicsThickness+ AluCapThickness /2.0
+    );
 
+    new G4PVPlacement(nullptr,
+                      AluCapPos,
+                      logicAluCap,
+                      "AluCap",
+                      logicCrilin,
+                      false,
+		      k);
+    if(k==4){ //for the final layer the cap is bigger
+      G4ThreeVector AluClosurePos(
+        0,
+        0,
+        k * layerStep + crystalLength + z0+ siPMThickness + electronicsThickness+ AluCapThickness + AluClosureThickness/2.0
+			      );
+      new G4PVPlacement(nullptr,
+                      AluClosurePos,
+                      logicAluClosure,
+                      "AluClosure",
+                      logicCrilin,
+                      false,
+                      k);
+      
+    }
+    
+
+    
     // Aluminum shell (centered in XY)
     G4ThreeVector aluminumPos(
         0,
@@ -314,6 +356,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
         k * layerStep + crystalLength/2.0 + z0
     );
 
+    
     new G4PVPlacement(nullptr,
                       aluminumPos,
                       logicAluminum,
@@ -322,6 +365,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
                       false,
                       k);
 
+    
     // Kapton strip (centered in XY)
     G4ThreeVector kaptonPos(
         0,
@@ -365,9 +409,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructCalorimeter() {
 
     G4VisAttributes* kaptonStripVisAtt = new G4VisAttributes(G4Colour(1.0, 1.0, 0.0)); // Giallo
     logicKaptonStrip->SetVisAttributes(kaptonStripVisAtt);
-
-
-
+    logicAluCap->SetVisAttributes(aluminumVisAtt);
+    logicAluClosure->SetVisAttributes(aluminumVisAtt);
+    
     // --- Virtual Detector parameters
     G4double vdThickness = 1*mm;  // thin plane
     G4double vdPosZ = - crilinsizez - 0.5*cm + vdThickness/2.0; // just after calorimeter
